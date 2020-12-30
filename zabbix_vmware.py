@@ -23,10 +23,9 @@ class ZabbixAPI:
         return self.postReq(payload)
 
     def getHost(self):
-        method = "host.get"
-        payload = {"jsonrpc": "2.0", "method": method, "params": { "filter": { "host": [ "zabbix" ] } }, "auth": self.token['result'], "id": 1}
-        req = requests.post(self.api_url, headers=self.headers, json=payload).json()
-        return req
+        method = "template.get"
+        payload = {"jsonrpc": "2.0", "method": method, "params": { "output": "extend", "selectHosts": "extend", "filter": { "host": [ "Template VM VMware Guest" ] } }, "auth": self.token['result'], "id": 1}
+        return self.postReq(payload)
 
 def main():
     zbx_api_user = zabbix_vmware_settings.zbx_api_user
@@ -35,8 +34,13 @@ def main():
 
     zb = ZabbixAPI(zbx_api_url, zbx_api_user, zbx_api_pass)
     result = zb.getHost()
+    search = result['result'][0]['hosts']
     print("=======================================")
-    print("Message =", result)
+    for hostNum in range(0, len(search)):
+        print("Host ID =", search[hostNum]['hostid'])
+        print("Host name =", search[hostNum]['host'])
+        print("Visible name =", search[hostNum]['name'])
+        print("\n")
     print("=======================================")
 
 if __name__ == "__main__":
