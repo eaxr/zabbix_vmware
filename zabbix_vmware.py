@@ -44,7 +44,7 @@ class ZabbixAPI:
         payload = {"jsonrpc": "2.0", "method": method, "params": { "itemid": itemid, "status": status }, "auth": self.token['result'], "id": 1}
         return self.postReq(payload)
 
-    def updateList(self, search2, status, check, zbx_logger):
+    def updateList(self, search2, status, check, zbx_logger, hostname, visname, hostid):
         for itemNum in range(0, len(search2)):
             itemid = search2[itemNum]['itemid']
             itemStatus = search2[itemNum]['status']
@@ -52,7 +52,10 @@ class ZabbixAPI:
             #print("Item =", search2[itemNum])
             if itemid and itemStatus == check:
                 self.updateItem(itemid, status)
-                msg = "Change Item ID = {}".format(itemid)
+                if status == 1:
+                    msg = "Disable Item with ID = {} for {} ({}), Host ID = {}".format(itemid, hostname, visname, hostid)
+                elif status == 0:
+                    msg = "Enable Item with ID = {} for {} ({}), Host ID = {}".format(itemid, hostname, visname, hostid)
                 print(msg)
                 zbx_logger.warning(msg)
 
@@ -64,7 +67,7 @@ def main():
 
     zbx_logger = logging.getLogger()
     zbx_logger.setLevel(logging.WARN)
-    formatter = logging.Formatter('%(asctime)s - %(message)s')
+    formatter = logging.Formatter('%(process)d:%(asctime)s [Zabbix_VMware] %(message)s', datefmt='%Y%m%d:%H%M%S.%03d')
     zbx_logfile = logging.FileHandler(zbx_log_path)
     zbx_logfile.setFormatter(formatter)
     zbx_logger.addHandler(zbx_logfile)
@@ -73,25 +76,27 @@ def main():
     result = zb.getHost()
     search = result['result'][0]['hosts']
     print("=======================================")
-    zbx_logger.warning("zabbix_vmware start")
+    #zbx_logger.warning("zabbix_vmware start")
     for hostNum in range(0, len(search)):
         hostid = search[hostNum]['hostid']
         print("Host ID =", hostid)
-        print("Host name =", search[hostNum]['host'])
-        print("Visible name =", search[hostNum]['name'])
+        hostname = search[hostNum]['host']
+        print("Host name =", hostname)
+        visname = search[hostNum]['name']
+        print("Visible name =", visname)
         powerState = zb.getItem(hostid, 'vmware.vm.powerstate[{$VMWARE.URL},{HOST.HOST}]', 'VMware: Power state')
         print("Power State =", powerState['result'][0]['lastvalue'])
         if powerState['result'][0]['lastvalue'] == "0":
             itemState = zb.getItemState(hostid)
             search2 = itemState['result']
-            zb.updateList(search2, 1, "0", zbx_logger)
+            zb.updateList(search2, 1, "0", zbx_logger, hostname, visname, hostid)
         elif powerState['result'][0]['lastvalue'] == "1":
             itemState = zb.getItemState(hostid)
             search2 = itemState['result']
-            zb.updateList(search2, 0, "1", zbx_logger)
+            zb.updateList(search2, 0, "1", zbx_logger, hostname, visname, hostid)
         print("\n")
     print("=======================================")
-    zbx_logger.warning("zabbix_vmware finish")
+    #zbx_logger.warning("zabbix_vmware finish")
 
 if __name__ == "__main__":
     main()
