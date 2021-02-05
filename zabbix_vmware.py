@@ -79,7 +79,7 @@ class ZabbixAPI:
                 self.updateItem(itemid, "1")
                 print("Item ID =", itemid, "has been disabled")
                 msg = "Item {} with ID = {} doesn't receive data, Host {} ({}) ID = {}".format(name, itemid, hostname, visname, hostid)
-            elif obj['result'][0]['state'] == "1":
+            elif obj['result'][0]['state'] == "0":
                 print("Item ID =", itemid, "began to receive data")
                 msg = "Item {} with ID = {} began to receive data, Host {} ({}) ID = {}".format(name, itemid, hostname, visname, hostid)
         elif status == "0":
