@@ -118,10 +118,11 @@ def main():
     zbx_logger.addHandler(zbx_logfile)
 
     zb = ZabbixAPI(zbx_api_url, zbx_api_user, zbx_api_pass)
+
+    print("=======================================")
     result = zb.getHost('Template VM VMware Guest')
     search = result['result'][0]['hosts']
-    print("=======================================")
-    zbx_logger.warning("zabbix_vmware start")
+    #zbx_logger.warning("zabbix_vmware start")
     for hostNum in range(0, len(search)):
         hostid = search[hostNum]['hostid']
         print("Host ID =", hostid)
@@ -140,8 +141,30 @@ def main():
             search2 = itemState['result']
             zb.updateList(search2, 0, "1", zbx_logger, hostname, visname, hostid)
         print("\n")
-    print("=======================================")
 
+    print("=======================================")
+    result = zb.getHost('Template VM VMware Hypervisor')
+    search = result['result'][0]['hosts']
+    for hostNum in range(0, len(search)):
+        hostid = search[hostNum]['hostid']
+        print("Host ID =", hostid)
+        hostname = search[hostNum]['host']
+        print("Host name =", hostname)
+        visname = search[hostNum]['name']
+        print("Visible name =", visname)
+        powerState = zb.getItem(hostid, 'vmware.hv.status[{$VMWARE.URL},{HOST.HOST}]', 'VMware: Overall status')
+        print("Overall status =", powerState['result'][0]['lastvalue'])
+        if powerState['result'][0]['lastvalue'] == "3":
+            itemState = zb.getItemState(hostid)
+            search2 = itemState['result']
+            zb.updateList(search2, 1, "0", zbx_logger, hostname, visname, hostid)
+        elif powerState['result'][0]['lastvalue'] == "1" or powerState['result'][0]['lastvalue'] == "2":
+            itemState = zb.getItemState(hostid)
+            search2 = itemState['result']
+            zb.updateList(search2, 0, "1", zbx_logger, hostname, visname, hostid)
+        print("\n")
+
+    print("=======================================")
     for template, drule in zbx_drule_dict.items():
         result = zb.getHost(template)
         search = result['result'][0]['hosts']
@@ -164,6 +187,7 @@ def main():
                         print("State = ", hostDR['result'][itemNum]['state'], "Error = ", hostDR['result'][itemNum]['error'])
                         zb.updateItemDR(hostDR['result'][itemNum]['itemid'], hostDR['result'][itemNum]['status'], hostDR['result'][itemNum]['name'], hostid, hostname, visname, zbx_logger)
                         print("\r")
+
     print("=======================================")
     #zbx_logger.warning("zabbix_vmware finish")
 
