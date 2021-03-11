@@ -1,0 +1,11 @@
+[Unit]
+Description=Zabbix VMware
+After=zabbix-server.service
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/python3 /var/lib/zabbix/zabbix_vmware.py
+
+[Install]
+WantedBy=multi-user.target
